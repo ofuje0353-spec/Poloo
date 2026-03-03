@@ -1,0 +1,2936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ofuje - My Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <style>
+        /* ==================== CSS RESET & VARIABLES ==================== */
+        :root {
+            --primary: #8B5CF6;
+            --primary-dark: #7C3AED;
+            --primary-light: #A78BFA;
+            --secondary: #EC4899;
+            --accent: #06B6D4;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            
+            /* Light Theme */
+            --bg-primary: #F8FAFC;
+            --bg-secondary: #FFFFFF;
+            --bg-tertiary: #F1F5F9;
+            --bg-card: #FFFFFF;
+            --text-primary: #1E293B;
+            --text-secondary: #64748B;
+            --text-muted: #94A3B8;
+            --border-color: #E2E8F0;
+            --shadow: rgba(0, 0, 0, 0.08);
+            --shadow-lg: rgba(0, 0, 0, 0.12);
+            --gradient-1: linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%);
+            --gradient-2: linear-gradient(135deg, #06B6D4 0%, #8B5CF6 100%);
+            --gradient-3: linear-gradient(135deg, #10B981 0%, #06B6D4 100%);
+            --gradient-4: linear-gradient(135deg, #F59E0B 0%, #EF4444 100%);
+            --glass-bg: rgba(255, 255, 255, 0.9);
+            --glass-border: rgba(255, 255, 255, 0.3);
+            --sidebar-bg: #FFFFFF;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #0F172A;
+            --bg-secondary: #1E293B;
+            --bg-tertiary: #334155;
+            --bg-card: #1E293B;
+            --text-primary: #F8FAFC;
+            --text-secondary: #CBD5E1;
+            --text-muted: #94A3B8;
+            --border-color: #334155;
+            --shadow: rgba(0, 0, 0, 0.25);
+            --shadow-lg: rgba(0, 0, 0, 0.4);
+            --glass-bg: rgba(30, 41, 59, 0.9);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --sidebar-bg: #1E293B;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            overflow-x: hidden;
+        }
+
+        /* ==================== DASHBOARD LAYOUT ==================== */
+        .dashboard-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* ==================== SIDEBAR ==================== */
+        .sidebar {
+            width: 280px;
+            background: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+        }
+
+        .sidebar-logo-icon {
+            width: 45px;
+            height: 45px;
+            background: var(--gradient-1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            color: white;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+        }
+
+        .sidebar-logo-text {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* User Profile Card in Sidebar */
+        .sidebar-profile {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .profile-card {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg-tertiary);
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .profile-card:hover {
+            background: var(--bg-primary);
+            box-shadow: 0 4px 15px var(--shadow);
+        }
+
+        .profile-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--gradient-1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: white;
+            position: relative;
+        }
+
+        .profile-avatar-badge {
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            width: 18px;
+            height: 18px;
+            background: var(--success);
+            border: 2px solid var(--sidebar-bg);
+            border-radius: 50%;
+        }
+
+        .profile-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .profile-name {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .profile-username {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Navigation Menu */
+        .sidebar-nav {
+            flex: 1;
+            padding: 1rem 0;
+            overflow-y: auto;
+        }
+
+        .nav-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .nav-section-title {
+            padding: 0.5rem 1.5rem;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+        }
+
+        .nav-menu {
+            list-style: none;
+        }
+
+        .nav-item {
+            margin: 0.25rem 0.75rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.875rem;
+            padding: 0.875rem 1rem;
+            border-radius: 12px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-link:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .nav-link.active {
+            background: var(--gradient-1);
+            color: white;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+        }
+
+        .nav-link i {
+            width: 22px;
+            font-size: 1.1rem;
+        }
+
+        .nav-badge {
+            margin-left: auto;
+            padding: 0.25rem 0.625rem;
+            background: var(--danger);
+            color: white;
+            border-radius: 50px;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+
+        .nav-link.active .nav-badge {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Sidebar Footer */
+        .sidebar-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .sidebar-footer-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: none;
+            border-radius: 12px;
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-footer-btn:hover {
+            background: var(--danger);
+            color: white;
+        }
+
+        /* ==================== MAIN CONTENT ==================== */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            min-height: 100vh;
+        }
+
+        /* Top Header */
+        .top-header {
+            position: sticky;
+            top: 0;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 50;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            border: none;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .header-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            border: none;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .header-btn:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .header-btn .notification-dot {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 10px;
+            height: 10px;
+            background: var(--danger);
+            border: 2px solid var(--bg-secondary);
+            border-radius: 50%;
+        }
+
+        .watch-live-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 12px;
+            background: var(--gradient-1);
+            color: white;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .watch-live-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+        }
+
+        .live-indicator {
+            width: 10px;
+            height: 10px;
+            background: #EF4444;
+            border-radius: 50%;
+            animation: live-blink 1.5s ease-in-out infinite;
+        }
+
+        @keyframes live-blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* ==================== DASHBOARD CONTENT ==================== */
+        .dashboard-content {
+            padding: 2rem;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+
+        .stat-card:nth-child(1)::before { background: var(--gradient-1); }
+        .stat-card:nth-child(2)::before { background: var(--gradient-2); }
+        .stat-card:nth-child(3)::before { background: var(--gradient-3); }
+        .stat-card:nth-child(4)::before { background: var(--gradient-4); }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px var(--shadow);
+        }
+
+        .stat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            color: white;
+        }
+
+        .stat-card:nth-child(1) .stat-icon { background: var(--gradient-1); }
+        .stat-card:nth-child(2) .stat-icon { background: var(--gradient-2); }
+        .stat-card:nth-child(3) .stat-icon { background: var(--gradient-3); }
+        .stat-card:nth-child(4) .stat-icon { background: var(--gradient-4); }
+
+        .stat-trend {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .stat-trend.up {
+            color: var(--success);
+        }
+
+        .stat-trend.down {
+            color: var(--danger);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        /* Content Grid */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+        }
+
+        /* Card Base */
+        .card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-title i {
+            color: var(--primary);
+        }
+
+        .card-action {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+            transition: gap 0.3s ease;
+        }
+
+        .card-action:hover {
+            gap: 0.625rem;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        /* ==================== WATCH HISTORY ==================== */
+        .watch-history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .history-item {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem;
+            border-radius: 14px;
+            background: var(--bg-tertiary);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .history-item:hover {
+            background: var(--bg-primary);
+            transform: translateX(5px);
+        }
+
+        .history-thumbnail {
+            width: 140px;
+            height: 80px;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .history-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .history-duration {
+            position: absolute;
+            bottom: 0.375rem;
+            right: 0.375rem;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 0.125rem 0.375rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .history-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            background: var(--primary);
+            border-radius: 0 0 10px 10px;
+        }
+
+        .history-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .history-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .history-meta {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .history-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .history-points {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            color: var(--warning);
+            font-weight: 600;
+        }
+
+        /* ==================== POINTS SECTION ==================== */
+        .points-overview {
+            margin-bottom: 1.5rem;
+        }
+
+        .points-balance {
+            background: var(--gradient-1);
+            border-radius: 20px;
+            padding: 2rem;
+            color: white;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .points-balance::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        }
+
+        .points-balance-icon {
+            width: 70px;
+            height: 70px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin: 0 auto 1rem;
+        }
+
+        .points-balance-value {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 0.25rem;
+        }
+
+        .points-balance-label {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        .points-next-reward {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 0.9rem;
+        }
+
+        .points-progress-mini {
+            width: 100px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .points-progress-mini-fill {
+            height: 100%;
+            background: white;
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+
+        .quick-action {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 1.25rem;
+            border-radius: 14px;
+            border: 2px solid var(--border-color);
+            background: var(--bg-secondary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: var(--text-primary);
+        }
+
+        .quick-action:hover {
+            border-color: var(--primary);
+            background: rgba(139, 92, 246, 0.1);
+            transform: translateY(-3px);
+        }
+
+        .quick-action i {
+            font-size: 1.5rem;
+            color: var(--primary);
+        }
+
+        .quick-action span {
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        /* ==================== EMOJI SHOP ==================== */
+        .emoji-shop-section {
+            margin-top: 2rem;
+        }
+
+        .shop-categories {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+        }
+
+        .shop-category {
+            padding: 0.625rem 1.25rem;
+            border-radius: 50px;
+            border: 2px solid var(--border-color);
+            background: transparent;
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+        }
+
+        .shop-category.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .shop-category:hover:not(.active) {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .emoji-shop-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 1rem;
+        }
+
+        .emoji-shop-item {
+            background: var(--bg-tertiary);
+            border-radius: 16px;
+            padding: 1.25rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            position: relative;
+        }
+
+        .emoji-shop-item:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: 0 10px 30px var(--shadow);
+        }
+
+        .emoji-shop-item.locked {
+            opacity: 0.6;
+        }
+
+        .emoji-shop-item .emoji {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .emoji-shop-item .emoji-name {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .emoji-shop-item .emoji-price {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.25rem;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--warning);
+        }
+
+        .emoji-shop-item .emoji-price.free {
+            color: var(--success);
+        }
+
+        .emoji-shop-item .lock-icon {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            width: 24px;
+            height: 24px;
+            background: var(--bg-secondary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        /* ==================== REDEMPTION HISTORY ==================== */
+        .redemption-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .redemption-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .redemption-item:last-child {
+            border-bottom: none;
+        }
+
+        .redemption-emoji {
+            width: 50px;
+            height: 50px;
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+        }
+
+        .redemption-info {
+            flex: 1;
+        }
+
+        .redemption-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+        }
+
+        .redemption-date {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .redemption-cost {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-weight: 700;
+            color: var(--danger);
+        }
+
+        /* ==================== SETTINGS SECTION ==================== */
+        .settings-content {
+            display: none;
+        }
+
+        .settings-content.active {
+            display: block;
+        }
+
+        .settings-section {
+            margin-bottom: 2rem;
+        }
+
+        .settings-section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .settings-section-title i {
+            color: var(--primary);
+        }
+
+        .settings-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .settings-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            transition: background 0.3s ease;
+        }
+
+        .settings-item:last-child {
+            border-bottom: none;
+        }
+
+        .settings-item:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .settings-item-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .settings-item-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: var(--bg-tertiary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            color: var(--primary);
+        }
+
+        .settings-item-text h4 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .settings-item-text p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            width: 52px;
+            height: 28px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+            background: var(--bg-tertiary);
+            border-radius: 50px;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-slider::before {
+            content: '';
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            left: 3px;
+            bottom: 3px;
+            background: white;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .toggle-switch input:checked + .toggle-slider {
+            background: var(--primary);
+        }
+
+        .toggle-switch input:checked + .toggle-slider::before {
+            transform: translateX(24px);
+        }
+
+        /* Settings Input */
+        .settings-input {
+            padding: 0.625rem 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            width: 200px;
+            transition: all 0.3s ease;
+        }
+
+        .settings-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* Settings Button */
+        .settings-btn {
+            padding: 0.625rem 1.25rem;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .settings-btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .settings-btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .settings-btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .settings-btn-danger:hover {
+            background: #DC2626;
+        }
+
+        /* Login Code Display */
+        .login-code-display {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .login-code {
+            font-family: 'Courier New', monospace;
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: 4px;
+            color: var(--primary);
+            background: var(--bg-tertiary);
+            padding: 0.625rem 1rem;
+            border-radius: 10px;
+        }
+
+        .copy-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            border: none;
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* ==================== PROFILE SECTION ==================== */
+        .profile-content {
+            display: none;
+        }
+
+        .profile-content.active {
+            display: block;
+        }
+
+        .profile-header-card {
+            background: var(--bg-card);
+            border-radius: 24px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .profile-cover {
+            height: 150px;
+            background: var(--gradient-1);
+            position: relative;
+        }
+
+        .profile-cover-edit {
+            position: absolute;
+            bottom: 1rem;
+            right: 1rem;
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .profile-cover-edit:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .profile-main {
+            padding: 0 2rem 2rem;
+            position: relative;
+        }
+
+        .profile-avatar-large {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: var(--gradient-2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: white;
+            border: 4px solid var(--bg-card);
+            margin-top: -60px;
+            position: relative;
+        }
+
+        .avatar-edit-btn {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--primary);
+            border: 3px solid var(--bg-card);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+        }
+
+        .avatar-edit-btn:hover {
+            background: var(--primary-dark);
+            transform: scale(1.1);
+        }
+
+        .profile-details {
+            margin-top: 1rem;
+        }
+
+        .profile-name-large {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .profile-username-large {
+            font-size: 1rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .profile-badges {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+        }
+
+        .profile-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+            padding: 0.375rem 0.75rem;
+            background: var(--bg-tertiary);
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .profile-badge i {
+            font-size: 0.9rem;
+        }
+
+        .profile-badge.member i { color: var(--primary); }
+        .profile-badge.points i { color: var(--warning); }
+        .profile-badge.streams i { color: var(--accent); }
+
+        /* Profile Form */
+        .profile-form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+        }
+
+        .profile-form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .profile-form-group.full-width {
+            grid-column: span 2;
+        }
+
+        .profile-form-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .profile-form-input {
+            padding: 0.875rem 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .profile-form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
+        }
+
+        .profile-form-input:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .profile-form-textarea {
+            resize: vertical;
+            min-height: 100px;
+            font-family: inherit;
+        }
+
+        .profile-form-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .profile-save-btn {
+            padding: 0.875rem 2rem;
+            border: none;
+            border-radius: 12px;
+            background: var(--gradient-1);
+            color: white;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .profile-save-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+        }
+
+        .profile-cancel-btn {
+            padding: 0.875rem 2rem;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .profile-cancel-btn:hover {
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        /* ==================== ACHIEVEMENTS ==================== */
+        .achievements-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 1rem;
+        }
+
+        .achievement-card {
+            background: var(--bg-tertiary);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .achievement-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px var(--shadow);
+        }
+
+        .achievement-card.locked {
+            opacity: 0.5;
+        }
+
+        .achievement-card.locked::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .achievement-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin: 0 auto 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .achievement-card:nth-child(1) .achievement-icon { background: var(--gradient-1); color: white; }
+        .achievement-card:nth-child(2) .achievement-icon { background: var(--gradient-2); color: white; }
+        .achievement-card:nth-child(3) .achievement-icon { background: var(--gradient-3); color: white; }
+        .achievement-card:nth-child(4) .achievement-icon { background: var(--gradient-4); color: white; }
+        .achievement-card:nth-child(5) .achievement-icon { background: var(--gradient-1); color: white; }
+        .achievement-card:nth-child(6) .achievement-icon { background: var(--gradient-2); color: white; }
+
+        .achievement-card.locked .achievement-icon {
+            background: var(--bg-secondary);
+            color: var(--text-muted);
+        }
+
+        .achievement-name {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .achievement-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .achievement-progress {
+            margin-top: 0.75rem;
+        }
+
+        .achievement-progress-bar {
+            height: 4px;
+            background: var(--bg-secondary);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .achievement-progress-fill {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+
+        .achievement-progress-text {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        /* ==================== MOBILE SIDEBAR OVERLAY ==================== */
+        .sidebar-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 99;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* ==================== TOAST NOTIFICATIONS ==================== */
+        .toast-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            z-index: 2000;
+        }
+
+        .toast {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 1rem 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            box-shadow: 0 10px 40px var(--shadow-lg);
+            transform: translateX(120%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            max-width: 380px;
+        }
+
+        .toast.visible {
+            transform: translateX(0);
+        }
+
+        .toast-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .toast-icon.success { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+        .toast-icon.error { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+        .toast-icon.info { background: rgba(139, 92, 246, 0.2); color: var(--primary); }
+
+        .toast-content { flex: 1; }
+        .toast-title { font-weight: 600; font-size: 0.95rem; color: var(--text-primary); }
+        .toast-message { font-size: 0.85rem; color: var(--text-secondary); }
+
+        /* ==================== MODAL ==================== */
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            border-radius: 24px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 450px;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .modal.active .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .modal-close {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            border: none;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            background: var(--danger);
+            color: white;
+        }
+
+        /* ==================== LOADING ==================== */
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+
+        .loading-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--gradient-1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        .loading-spinner i {
+            font-size: 1.5rem;
+            color: white;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.4); }
+            50% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(139, 92, 246, 0); }
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* ==================== RESPONSIVE ==================== */
+        @media (max-width: 1200px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .mobile-menu-btn {
+                display: flex;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .dashboard-content {
+                padding: 1rem;
+            }
+
+            .top-header {
+                padding: 1rem;
+            }
+
+            .page-title {
+                font-size: 1.25rem;
+            }
+
+            .watch-live-btn span {
+                display: none;
+            }
+
+            .watch-live-btn {
+                padding: 0.75rem;
+            }
+
+            .profile-form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .profile-form-group.full-width {
+                grid-column: span 1;
+            }
+
+            .achievements-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .history-item {
+                flex-direction: column;
+            }
+
+            .history-thumbnail {
+                width: 100%;
+                height: 120px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header-right {
+                gap: 0.5rem;
+            }
+
+            .header-btn {
+                width: 40px;
+                height: 40px;
+            }
+
+            .achievements-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .quick-actions {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <i class="fas fa-play"></i>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Mobile Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Dashboard Layout -->
+    <div class="dashboard-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <a href="index.html" class="sidebar-logo">
+                    <div class="sidebar-logo-icon">
+                        <i class="fas fa-play"></i>
+                    </div>
+                    <span class="sidebar-logo-text">Ofuje</span>
+                </a>
+            </div>
+
+            <div class="sidebar-profile">
+                <div class="profile-card" onclick="switchSection('profile')">
+                    <div class="profile-avatar" id="sidebarAvatar">
+                        JD
+                        <span class="profile-avatar-badge"></span>
+                    </div>
+                    <div class="profile-info">
+                        <div class="profile-name" id="sidebarName">John Doe</div>
+                        <div class="profile-username" id="sidebarUsername">@johndoe</div>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Main</div>
+                    <ul class="nav-menu">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link active" data-section="overview">
+                                <i class="fas fa-th-large"></i>
+                                <span>Overview</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-section="history">
+                                <i class="fas fa-history"></i>
+                                <span>Watch History</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-section="points">
+                                <i class="fas fa-coins"></i>
+                                <span>My Points</span>
+                                <span class="nav-badge" id="navPointsBadge">0</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Shop</div>
+                    <ul class="nav-menu">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-section="shop">
+                                <i class="fas fa-store"></i>
+                                <span>Emoji Shop</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-section="redemptions">
+                                <i class="fas fa-receipt"></i>
+                                <span>Redemption History</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Account</div>
+                    <ul class="nav-menu">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-section="profile">
+                                <i class="fas fa-user"></i>
+                                <span>My Profile</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-section="achievements">
+                                <i class="fas fa-trophy"></i>
+                                <span>Achievements</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-section="settings">
+                                <i class="fas fa-cog"></i>
+                                <span>Settings</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button class="sidebar-footer-btn" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Header -->
+            <header class="top-header">
+                <div class="header-left">
+                    <button class="mobile-menu-btn" id="mobileMenuBtn">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title" id="pageTitle">Overview</h1>
+                </div>
+                <div class="header-right">
+                    <button class="header-btn" id="themeToggle" title="Toggle theme">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    <button class="header-btn" id="notificationBtn" title="Notifications">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-dot"></span>
+                    </button>
+                    <a href="index.html" class="watch-live-btn" id="watchLiveBtn">
+                        <span class="live-indicator"></span>
+                        <span>Watch Live</span>
+                    </a>
+                </div>
+            </header>
+
+            <!-- Dashboard Content -->
+            <div class="dashboard-content">
+                <!-- Overview Section -->
+                <section class="dashboard-section active" id="overviewSection">
+                    <!-- Stats Grid -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <div class="stat-icon">
+                                    <i class="fas fa-coins"></i>
+                                </div>
+                                <div class="stat-trend up">
+                                    <i class="fas fa-arrow-up"></i>
+                                    +30
+                                </div>
+                            </div>
+                            <div class="stat-value" id="totalPoints">0</div>
+                            <div class="stat-label">Total Points</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <div class="stat-icon">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div class="stat-trend up">
+                                    <i class="fas fa-arrow-up"></i>
+                                    +45m
+                                </div>
+                            </div>
+                            <div class="stat-value" id="watchTime">0h</div>
+                            <div class="stat-label">Watch Time</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <div class="stat-icon">
+                                    <i class="fas fa-video"></i>
+                                </div>
+                                <div class="stat-trend up">
+                                    <i class="fas fa-arrow-up"></i>
+                                    +2
+                                </div>
+                            </div>
+                            <div class="stat-value" id="streamsWatched">0</div>
+                            <div class="stat-label">Streams Watched</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <div class="stat-icon">
+                                    <i class="fas fa-comment"></i>
+                                </div>
+                                <div class="stat-trend up">
+                                    <i class="fas fa-arrow-up"></i>
+                                    +15
+                                </div>
+                            </div>
+                            <div class="stat-value" id="messagesSent">0</div>
+                            <div class="stat-label">Messages Sent</div>
+                        </div>
+                    </div>
+
+                    <!-- Content Grid -->
+                    <div class="content-grid">
+                        <!-- Recent Watch History -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <i class="fas fa-history"></i> Recent Watch History
+                                </h3>
+                                <a href="#" class="card-action" onclick="switchSection('history')">
+                                    View All <i class="fas fa-arrow-right"></i>
+                                </a>
+                            </div>
+                            <div class="card-body">
+                                <div class="watch-history-list" id="recentHistoryList">
+                                    <!-- History items will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Points Overview -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <i class="fas fa-coins"></i> Points
+                                </h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="points-overview">
+                                    <div class="points-balance">
+                                        <div class="points-balance-icon">
+                                            <i class="fas fa-coins"></i>
+                                        </div>
+                                        <div class="points-balance-value" id="pointsBalanceValue">0</div>
+                                        <div class="points-balance-label">Available Points</div>
+                                        <div class="points-next-reward">
+                                            <span>Next reward:</span>
+                                            <div class="points-progress-mini">
+                                                <div class="points-progress-mini-fill" id="pointsProgressFill" style="width: 0%"></div>
+                                            </div>
+                                            <span id="nextRewardTime">20:00</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="quick-actions">
+                                    <a href="#" class="quick-action" onclick="switchSection('shop')">
+                                        <i class="fas fa-store"></i>
+                                        <span>Emoji Shop</span>
+                                    </a>
+                                    <a href="#" class="quick-action" onclick="switchSection('redemptions')">
+                                        <i class="fas fa-receipt"></i>
+                                        <span>History</span>
+                                    </a>
+                                    <a href="index.html" class="quick-action">
+                                        <i class="fas fa-play-circle"></i>
+                                        <span>Watch Stream</span>
+                                    </a>
+                                    <a href="#" class="quick-action" onclick="switchSection('achievements')">
+                                        <i class="fas fa-trophy"></i>
+                                        <span>Achievements</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Watch History Section -->
+                <section class="dashboard-section" id="historySection" style="display: none;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-history"></i> Watch History
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="watch-history-list" id="fullHistoryList">
+                                <!-- Full history will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Points Section -->
+                <section class="dashboard-section" id="pointsSection" style="display: none;">
+                    <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <div class="stat-icon">
+                                    <i class="fas fa-coins"></i>
+                                </div>
+                            </div>
+                            <div class="stat-value" id="currentPoints">0</div>
+                            <div class="stat-label">Current Balance</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <div class="stat-icon">
+                                    <i class="fas fa-plus-circle"></i>
+                                </div>
+                            </div>
+                            <div class="stat-value" id="totalEarned">0</div>
+                            <div class="stat-label">Total Earned</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <div class="stat-icon">
+                                    <i class="fas fa-minus-circle"></i>
+                                </div>
+                            </div>
+                            <div class="stat-value" id="totalSpent">0</div>
+                            <div class="stat-label">Total Spent</div>
+                        </div>
+                    </div>
+
+                    <div class="card" style="margin-top: 1.5rem;">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-info-circle"></i> How to Earn Points
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="settings-item" style="border: none; padding: 1rem 0;">
+                                <div class="settings-item-info">
+                                    <div class="settings-item-icon">
+                                        <i class="fas fa-eye"></i>
+                                    </div>
+                                    <div class="settings-item-text">
+                                        <h4>Watch Live Streams</h4>
+                                        <p>Earn 30 points for every 20 minutes watched</p>
+                                    </div>
+                                </div>
+                                <span style="color: var(--success); font-weight: 700;">+30 pts</span>
+                            </div>
+                            <div class="settings-item" style="border: none; padding: 1rem 0;">
+                                <div class="settings-item-info">
+                                    <div class="settings-item-icon">
+                                        <i class="fas fa-user-plus"></i>
+                                    </div>
+                                    <div class="settings-item-text">
+                                        <h4>Create Account</h4>
+                                        <p>Welcome bonus for new users</p>
+                                    </div>
+                                </div>
+                                <span style="color: var(--success); font-weight: 700;">+100 pts</span>
+                            </div>
+                            <div class="settings-item" style="border: none; padding: 1rem 0;">
+                                <div class="settings-item-info">
+                                    <div class="settings-item-icon">
+                                        <i class="fas fa-calendar-check"></i>
+                                    </div>
+                                    <div class="settings-item-text">
+                                        <h4>Daily Login</h4>
+                                        <p>Bonus for logging in each day</p>
+                                    </div>
+                                </div>
+                                <span style="color: var(--success); font-weight: 700;">+10 pts</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Emoji Shop Section -->
+                <section class="dashboard-section" id="shopSection" style="display: none;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-store"></i> Emoji & Sticker Shop
+                            </h3>
+                            <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--warning); font-weight: 700;">
+                                <i class="fas fa-coins"></i>
+                                <span id="shopBalance">0</span> pts
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="shop-categories">
+                                <button class="shop-category active" data-category="all">All</button>
+                                <button class="shop-category" data-category="free">Free</button>
+                                <button class="shop-category" data-category="basic">Basic</button>
+                                <button class="shop-category" data-category="special">Special</button>
+                                <button class="shop-category" data-category="legendary">Legendary</button>
+                            </div>
+                            <div class="emoji-shop-grid" id="emojiShopGrid">
+                                <!-- Emojis will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Redemption History Section -->
+                <section class="dashboard-section" id="redemptionsSection" style="display: none;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-receipt"></i> Redemption History
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="redemption-list" id="redemptionList">
+                                <!-- Redemption items will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Profile Section -->
+                <section class="dashboard-section" id="profileSection" style="display: none;">
+                    <div class="profile-header-card">
+                        <div class="profile-cover">
+                            <button class="profile-cover-edit">
+                                <i class="fas fa-camera"></i> Edit Cover
+                            </button>
+                        </div>
+                        <div class="profile-main">
+                            <div class="profile-avatar-large" id="profileAvatar">
+                                JD
+                                <button class="avatar-edit-btn">
+                                    <i class="fas fa-camera"></i>
+                                </button>
+                            </div>
+                            <div class="profile-details">
+                                <h2 class="profile-name-large" id="profileNameLarge">John Doe</h2>
+                                <p class="profile-username-large" id="profileUsernameLarge">@johndoe</p>
+                                <div class="profile-badges">
+                                    <span class="profile-badge member">
+                                        <i class="fas fa-user"></i> Member since Jan 2025
+                                    </span>
+                                    <span class="profile-badge points">
+                                        <i class="fas fa-coins"></i> <span id="profilePoints">0</span> Points
+                                    </span>
+                                    <span class="profile-badge streams">
+                                        <i class="fas fa-video"></i> <span id="profileStreams">0</span> Streams Watched
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-edit"></i> Edit Profile
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <form id="profileForm">
+                                <div class="profile-form-grid">
+                                    <div class="profile-form-group">
+                                        <label class="profile-form-label">First Name</label>
+                                        <input type="text" class="profile-form-input" id="editFirstName" placeholder="John">
+                                    </div>
+                                    <div class="profile-form-group">
+                                        <label class="profile-form-label">Last Name</label>
+                                        <input type="text" class="profile-form-input" id="editLastName" placeholder="Doe">
+                                    </div>
+                                    <div class="profile-form-group">
+                                        <label class="profile-form-label">Username</label>
+                                        <input type="text" class="profile-form-input" id="editUsername" placeholder="johndoe" disabled>
+                                    </div>
+                                    <div class="profile-form-group">
+                                        <label class="profile-form-label">Email</label>
+                                        <input type="email" class="profile-form-input" id="editEmail" placeholder="john@example.com" disabled>
+                                    </div>
+                                    <div class="profile-form-group full-width">
+                                        <label class="profile-form-label">Bio</label>
+                                        <textarea class="profile-form-input profile-form-textarea" id="editBio" placeholder="Tell us about yourself..."></textarea>
+                                    </div>
+                                </div>
+                                <div class="profile-form-actions">
+                                    <button type="submit" class="profile-save-btn">
+                                        <i class="fas fa-save"></i> Save Changes
+                                    </button>
+                                    <button type="button" class="profile-cancel-btn">Cancel</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Achievements Section -->
+                <section class="dashboard-section" id="achievementsSection" style="display: none;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-trophy"></i> Achievements
+                            </h3>
+                            <span style="color: var(--text-muted); font-size: 0.9rem;">
+                                <span id="achievementsUnlocked">3</span> / 6 Unlocked
+                            </span>
+                        </div>
+                        <div class="card-body">
+                            <div class="achievements-grid" id="achievementsGrid">
+                                <!-- Achievements will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Settings Section -->
+                <section class="dashboard-section" id="settingsSection" style="display: none;">
+                    <div class="settings-section">
+                        <h3 class="settings-section-title">
+                            <i class="fas fa-key"></i> Login Information
+                        </h3>
+                        <div class="settings-card">
+                            <div class="settings-item">
+                                <div class="settings-item-info">
+                                    <div class="settings-item-icon">
+                                        <i class="fas fa-fingerprint"></i>
+                                    </div>
+                                    <div class="settings-item-text">
+                                        <h4>Your Login Code</h4>
+                                        <p>Use this code to log in to your account</p>
+                                    </div>
+                                </div>
+                                <div class="login-code-display">
+                                    <span class="login-code" id="userLoginCode">------</span>
+                                    <button class="copy-btn" id="copyLoginCode" title="Copy code">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3 class="settings-section-title">
+                            <i class="fas fa-palette"></i> Appearance
+                        </h3>
+                        <div class="settings-card">
+                            <div class="settings-item">
+                                <div class="settings-item-info">
+                                    <div class="settings-item-icon">
+                                        <i class="fas fa-moon"></i>
+                                    </div>
+                                    <div class="settings-item-text">
+                                        <h4>Dark Mode</h4>
+                                        <p>Toggle dark/light theme</p>
+                                    </div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="darkModeToggle">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3 class="settings-section-title">
+                            <i class="fas fa-bell"></i> Notifications
+                        </h3>
+                        <div class="settings-card">
+                            <div class="settings-item">
+                                <div class="settings-item-info">
+                                    <div class="settings-item-icon">
+                                        <i class="fas fa-broadcast-tower"></i>
+                                    </div>
+                                    <div class="settings-item-text">
+                                        <h4>Stream Notifications</h4>
+                                        <p>Get notified when streams go live</p>
+                                    </div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="streamNotifications" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div class="settings-item">
+                                <div class="settings-item-info">
+                                    <div class="settings-item-icon">
+                                        <i class="fas fa-coins"></i>
+                                    </div>
+                                    <div class="settings-item-text">
+                                        <h4>Points Notifications</h4>
+                                        <p>Get notified when you earn points</p>
+                                    </div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="pointsNotifications" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3 class="settings-section-title" style="color: var(--danger);">
+                            <i class="fas fa-exclamation-triangle"></i> Danger Zone
+                        </h3>
+                        <div class="settings-card">
+                            <div class="settings-item">
+                                <div class="settings-item-info">
+                                    <div class="settings-item-icon" style="background: rgba(239, 68, 68, 0.1); color: var(--danger);">
+                                        <i class="fas fa-trash"></i>
+                                    </div>
+                                    <div class="settings-item-text">
+                                        <h4>Delete Account</h4>
+                                        <p>Permanently delete your account and all data</p>
+                                    </div>
+                                </div>
+                                <button class="settings-btn settings-btn-danger" id="deleteAccountBtn">
+                                    Delete Account
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Emoji Purchase Modal -->
+    <div class="modal" id="purchaseModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Purchase Emoji</h3>
+                <button class="modal-close" id="closePurchaseModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div style="text-align: center; padding: 1.5rem 0;">
+                <div style="font-size: 4rem; margin-bottom: 1rem;" id="purchaseEmoji">🎉</div>
+                <h4 style="font-size: 1.25rem; margin-bottom: 0.5rem;" id="purchaseEmojiName">Party</h4>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; color: var(--warning); font-weight: 700; font-size: 1.5rem;">
+                    <i class="fas fa-coins"></i>
+                    <span id="purchaseEmojiCost">50</span> pts
+                </div>
+            </div>
+            <div style="display: flex; gap: 1rem;">
+                <button class="profile-cancel-btn" style="flex: 1;" onclick="closePurchaseModal()">Cancel</button>
+                <button class="profile-save-btn" style="flex: 1;" id="confirmPurchaseBtn">
+                    <i class="fas fa-check"></i> Purchase
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Account Modal -->
+    <div class="modal" id="deleteModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" style="color: var(--danger);">Delete Account</h3>
+                <button class="modal-close" id="closeDeleteModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div style="padding: 1rem 0;">
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                    Are you sure you want to delete your account? This action cannot be undone and you will lose:
+                </p>
+                <ul style="color: var(--text-secondary); margin-left: 1.5rem; margin-bottom: 1rem;">
+                    <li>All your points</li>
+                    <li>Watch history</li>
+                    <li>Purchased emojis</li>
+                    <li>Achievements</li>
+                </ul>
+                <p style="color: var(--danger); font-weight: 600;">
+                    Type "DELETE" to confirm:
+                </p>
+                <input type="text" class="profile-form-input" id="deleteConfirmInput" placeholder="Type DELETE" style="margin-top: 0.5rem;">
+            </div>
+            <div style="display: flex; gap: 1rem;">
+                <button class="profile-cancel-btn" style="flex: 1;" onclick="closeDeleteModal()">Cancel</button>
+                <button class="settings-btn settings-btn-danger" style="flex: 1;" id="confirmDeleteBtn" disabled>
+                    Delete Forever
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== FIREBASE CONFIGURATION ====================
+        const firebaseConfig = {
+apiKey: "AIzaSyA9yaWNpf5qP4Z7_Xr2GZ-JnxAuh9ecZOI",
+  authDomain: "shakede-42cef.firebaseapp.com",
+  databaseURL: "https://shakede-42cef-default-rtdb.firebaseio.com",
+  projectId: "shakede-42cef",
+  storageBucket: "shakede-42cef.firebasestorage.app",
+  messagingSenderId: "17172532179",
+  appId: "1:17172532179:web:5ce36b564ea7f7c5df3d26"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // ==================== EMOJI DATA ====================
+        const emojis = [
+            { emoji: '👍', name: 'Thumbs Up', cost: 0, category: 'free' },
+            { emoji: '❤️', name: 'Heart', cost: 0, category: 'free' },
+            { emoji: '😂', name: 'Laugh', cost: 0, category: 'free' },
+            { emoji: '🔥', name: 'Fire', cost: 0, category: 'free' },
+            { emoji: '👏', name: 'Clap', cost: 0, category: 'free' },
+            { emoji: '🎉', name: 'Party', cost: 10, category: 'basic' },
+            { emoji: '💪', name: 'Strong', cost: 10, category: 'basic' },
+            { emoji: '🌟', name: 'Star', cost: 10, category: 'basic' },
+            { emoji: '💎', name: 'Diamond', cost: 10, category: 'basic' },
+            { emoji: '🎮', name: 'Gaming', cost: 10, category: 'basic' },
+            { emoji: '🚀', name: 'Rocket', cost: 50, category: 'special' },
+            { emoji: '👑', name: 'Crown', cost: 50, category: 'special' },
+            { emoji: '🦄', name: 'Unicorn', cost: 50, category: 'special' },
+            { emoji: '🌈', name: 'Rainbow', cost: 50, category: 'special' },
+            { emoji: '💫', name: 'Sparkles', cost: 50, category: 'special' },
+            { emoji: '🏆', name: 'Trophy', cost: 200, category: 'legendary' },
+            { emoji: '💝', name: 'Gift Heart', cost: 200, category: 'legendary' },
+            { emoji: '🎭', name: 'Theater', cost: 200, category: 'legendary' },
+            { emoji: '🌸', name: 'Cherry Blossom', cost: 200, category: 'legendary' },
+            { emoji: '⚡', name: 'Lightning', cost: 200, category: 'legendary' },
+        ];
+
+        // ==================== ACHIEVEMENTS DATA ====================
+        const achievements = [
+            { id: 'first_stream', name: 'First Stream', desc: 'Watch your first stream', icon: 'fa-play', unlocked: true },
+            { id: 'point_collector', name: 'Point Collector', desc: 'Earn 100 points', icon: 'fa-coins', unlocked: true, progress: 100, max: 100 },
+            { id: 'chatterbox', name: 'Chatterbox', desc: 'Send 50 messages', icon: 'fa-comment', unlocked: true, progress: 50, max: 50 },
+            { id: 'marathon', name: 'Marathon Viewer', desc: 'Watch for 5 hours total', icon: 'fa-clock', unlocked: false, progress: 2, max: 5 },
+            { id: 'big_spender', name: 'Big Spender', desc: 'Spend 500 points', icon: 'fa-shopping-cart', unlocked: false, progress: 150, max: 500 },
+            { id: 'vip', name: 'VIP Status', desc: 'Reach 1000 points', icon: 'fa-crown', unlocked: false, progress: 450, max: 1000 },
+        ];
+
+        // ==================== WATCH HISTORY DATA ====================
+        const watchHistory = [
+            { id: 1, title: 'New Year Special Stream', thumbnail: 'https://images.unsplash.com/photo-1493711662062-fa541f7f3d24?w=300', duration: '1:24:35', progress: 100, date: '2 days ago', points: 60 },
+            { id: 2, title: 'Tech Talk Tuesday', thumbnail: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=300', duration: '2:15:42', progress: 75, date: '5 days ago', points: 90 },
+            { id: 3, title: 'Gaming Night Special', thumbnail: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=300', duration: '3:02:55', progress: 45, date: '1 week ago', points: 60 },
+            { id: 4, title: 'Chill Stream - Music & Vibes', thumbnail: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=300', duration: '1:45:18', progress: 100, date: '2 weeks ago', points: 60 },
+        ];
+
+        // ==================== REDEMPTION HISTORY DATA ====================
+        const redemptionHistory = [
+            { emoji: '🚀', name: 'Rocket', cost: 50, date: 'Today, 2:30 PM' },
+            { emoji: '👑', name: 'Crown', cost: 50, date: 'Yesterday, 8:15 PM' },
+            { emoji: '🎉', name: 'Party', cost: 10, date: 'Jan 10, 5:45 PM' },
+            { emoji: '💎', name: 'Diamond', cost: 10, date: 'Jan 8, 9:00 AM' },
+        ];
+
+        // ==================== GLOBAL STATE ====================
+        let currentUser = null;
+        let currentTheme = localStorage.getItem('theme') || 'light';
+        let selectedEmoji = null;
+
+        // ==================== INITIALIZATION ====================
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeApp();
+        });
+
+        function initializeApp() {
+            // Hide loading
+            setTimeout(() => {
+                document.getElementById('loadingOverlay').classList.add('hidden');
+            }, 800);
+
+            // Check auth
+            checkAuth();
+
+            // Apply theme
+            applyTheme(currentTheme);
+
+            // Init event listeners
+            initEventListeners();
+
+            // Load initial data
+            loadDashboardData();
+        }
+
+        // ==================== AUTH CHECK ====================
+        function checkAuth() {
+            const userData = localStorage.getItem('ofujeUser');
+            if (!userData) {
+                window.location.href = 'auth.html';
+                return;
+            }
+            currentUser = JSON.parse(userData);
+            updateUserUI();
+        }
+
+        function updateUserUI() {
+            const initials = currentUser.name.split(' ').map(n => n[0]).join('').toUpperCase();
+            
+            // Sidebar
+            document.getElementById('sidebarAvatar').textContent = initials;
+            document.getElementById('sidebarName').textContent = currentUser.name;
+            document.getElementById('sidebarUsername').textContent = '@' + currentUser.username;
+
+            // Profile
+            document.getElementById('profileAvatar').innerHTML = initials + '<button class="avatar-edit-btn"><i class="fas fa-camera"></i></button>';
+            document.getElementById('profileNameLarge').textContent = currentUser.name;
+            document.getElementById('profileUsernameLarge').textContent = '@' + currentUser.username;
+
+            // Points
+            const points = currentUser.points || 0;
+            document.getElementById('totalPoints').textContent = points;
+            document.getElementById('pointsBalanceValue').textContent = points;
+            document.getElementById('navPointsBadge').textContent = points;
+            document.getElementById('currentPoints').textContent = points;
+            document.getElementById('shopBalance').textContent = points;
+            document.getElementById('profilePoints').textContent = points;
+
+            // Stats
+            const watchTimeHours = Math.floor((currentUser.watchTime || 0) / 3600);
+            document.getElementById('watchTime').textContent = watchTimeHours + 'h';
+            document.getElementById('streamsWatched').textContent = currentUser.streamsWatched || 4;
+            document.getElementById('messagesSent').textContent = currentUser.messagesSent || 23;
+            document.getElementById('profileStreams').textContent = currentUser.streamsWatched || 4;
+
+            // Form fields
+            const nameParts = currentUser.name.split(' ');
+            document.getElementById('editFirstName').value = nameParts[0] || '';
+            document.getElementById('editLastName').value = nameParts.slice(1).join(' ') || '';
+            document.getElementById('editUsername').value = currentUser.username || '';
+            document.getElementById('editEmail').value = currentUser.email || '';
+
+            // Login code
+            document.getElementById('userLoginCode').textContent = currentUser.loginCode || '------';
+
+            // Total earned/spent
+            document.getElementById('totalEarned').textContent = (currentUser.totalEarned || points + 120);
+            document.getElementById('totalSpent').textContent = (currentUser.totalSpent || 120);
+        }
+
+        // ==================== THEME ====================
+        function applyTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            const icon = document.querySelector('#themeToggle i');
+            icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+            localStorage.setItem('theme', theme);
+            currentTheme = theme;
+
+            // Update toggle in settings
+            document.getElementById('darkModeToggle').checked = theme === 'dark';
+        }
+
+        // ==================== EVENT LISTENERS ====================
+        function initEventListeners() {
+            // Theme toggle
+            document.getElementById('themeToggle').addEventListener('click', () => {
+                applyTheme(currentTheme === 'light' ? 'dark' : 'light');
+            });
+
+            document.getElementById('darkModeToggle').addEventListener('change', (e) => {
+                applyTheme(e.target.checked ? 'dark' : 'light');
+            });
+
+            // Mobile menu
+            document.getElementById('mobileMenuBtn').addEventListener('click', toggleSidebar);
+            document.getElementById('sidebarOverlay').addEventListener('click', toggleSidebar);
+
+            // Navigation
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const section = link.dataset.section;
+                    switchSection(section);
+                    
+                    // Close mobile sidebar
+                    if (window.innerWidth < 1024) {
+                        toggleSidebar();
+                    }
+                });
+            });
+
+            // Logout
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+
+            // Copy login code
+            document.getElementById('copyLoginCode').addEventListener('click', copyLoginCode);
+
+            // Shop categories
+            document.querySelectorAll('.shop-category').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.shop-category').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    loadEmojiShop(btn.dataset.category);
+                });
+            });
+
+            // Profile form
+            document.getElementById('profileForm').addEventListener('submit', saveProfile);
+
+            // Delete account
+            document.getElementById('deleteAccountBtn').addEventListener('click', () => {
+                document.getElementById('deleteModal').classList.add('active');
+            });
+
+            document.getElementById('closeDeleteModal').addEventListener('click', closeDeleteModal);
+            
+            document.getElementById('deleteConfirmInput').addEventListener('input', (e) => {
+                document.getElementById('confirmDeleteBtn').disabled = e.target.value !== 'DELETE';
+            });
+
+            document.getElementById('confirmDeleteBtn').addEventListener('click', deleteAccount);
+
+            // Purchase modal
+            document.getElementById('closePurchaseModal').addEventListener('click', closePurchaseModal);
+            document.getElementById('confirmPurchaseBtn').addEventListener('click', confirmPurchase);
+        }
+
+        // ==================== SIDEBAR ====================
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
+            document.getElementById('sidebarOverlay').classList.toggle('active');
+        }
+
+        // ==================== SECTION SWITCHING ====================
+        function switchSection(section) {
+            // Update nav links
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.toggle('active', link.dataset.section === section);
+            });
+
+            // Update sections
+            document.querySelectorAll('.dashboard-section').forEach(sec => {
+                sec.style.display = 'none';
+            });
+
+            const sectionEl = document.getElementById(section + 'Section');
+            if (sectionEl) {
+                sectionEl.style.display = 'block';
+            }
+
+            // Update page title
+            const titles = {
+                overview: 'Overview',
+                history: 'Watch History',
+                points: 'My Points',
+                shop: 'Emoji Shop',
+                redemptions: 'Redemption History',
+                profile: 'My Profile',
+                achievements: 'Achievements',
+                settings: 'Settings'
+            };
+            document.getElementById('pageTitle').textContent = titles[section] || 'Dashboard';
+        }
+
+        // ==================== LOAD DATA ====================
+        function loadDashboardData() {
+            loadWatchHistory();
+            loadEmojiShop('all');
+            loadRedemptionHistory();
+            loadAchievements();
+        }
+
+        function loadWatchHistory() {
+            const recentList = document.getElementById('recentHistoryList');
+            const fullList = document.getElementById('fullHistoryList');
+            
+            const historyHTML = watchHistory.map(item => `
+                <div class="history-item" onclick="window.open('https://youtube.com', '_blank')">
+                    <div class="history-thumbnail">
+                        <img src="${item.thumbnail}" alt="${item.title}">
+                        <span class="history-duration">${item.duration}</span>
+                        <div class="history-progress" style="width: ${item.progress}%"></div>
+                    </div>
+                    <div class="history-info">
+                        <h4 class="history-title">${item.title}</h4>
+                        <div class="history-meta">
+                            <span><i class="fas fa-calendar"></i> ${item.date}</span>
+                            <span class="history-points"><i class="fas fa-coins"></i> +${item.points} pts</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            recentList.innerHTML = historyHTML;
+            fullList.innerHTML = historyHTML;
+        }
+
+        function loadEmojiShop(category) {
+            const grid = document.getElementById('emojiShopGrid');
+            const points = currentUser?.points || 0;
+
+            const filtered = category === 'all' ? emojis : emojis.filter(e => e.category === category);
+
+            grid.innerHTML = filtered.map(item => {
+                const canAfford = points >= item.cost;
+                const isLocked = item.cost > 0 && !canAfford;
+
+                return `
+                    <div class="emoji-shop-item ${isLocked ? 'locked' : ''}" onclick="openPurchaseModal('${item.emoji}', '${item.name}', ${item.cost})">
+                        <span class="emoji">${item.emoji}</span>
+                        <span class="emoji-name">${item.name}</span>
+                        <span class="emoji-price ${item.cost === 0 ? 'free' : ''}">
+                            ${item.cost === 0 ? '<i class="fas fa-check"></i> Free' : `<i class="fas fa-coins"></i> ${item.cost}`}
+                        </span>
+                        ${isLocked ? '<span class="lock-icon"><i class="fas fa-lock"></i></span>' : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function loadRedemptionHistory() {
+            const list = document.getElementById('redemptionList');
+            
+            if (redemptionHistory.length === 0) {
+                list.innerHTML = `
+                    <div style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                        <i class="fas fa-receipt" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                        <p>No redemptions yet</p>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = redemptionHistory.map(item => `
+                <div class="redemption-item">
+                    <div class="redemption-emoji">${item.emoji}</div>
+                    <div class="redemption-info">
+                        <div class="redemption-name">${item.name}</div>
+                        <div class="redemption-date">${item.date}</div>
+                    </div>
+                    <div class="redemption-cost">
+                        <i class="fas fa-coins"></i> -${item.cost}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function loadAchievements() {
+            const grid = document.getElementById('achievementsGrid');
+            const unlocked = achievements.filter(a => a.unlocked).length;
+            document.getElementById('achievementsUnlocked').textContent = unlocked;
+
+            grid.innerHTML = achievements.map(item => `
+                <div class="achievement-card ${item.unlocked ? '' : 'locked'}">
+                    <div class="achievement-icon">
+                        <i class="fas ${item.icon}"></i>
+                    </div>
+                    <div class="achievement-name">${item.name}</div>
+                    <div class="achievement-desc">${item.desc}</div>
+                    ${item.progress !== undefined ? `
+                        <div class="achievement-progress">
+                            <div class="achievement-progress-bar">
+                                <div class="achievement-progress-fill" style="width: ${(item.progress / item.max) * 100}%"></div>
+                            </div>
+                            <div class="achievement-progress-text">${item.progress} / ${item.max}</div>
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        // ==================== PURCHASE MODAL ====================
+        function openPurchaseModal(emoji, name, cost) {
+            const points = currentUser?.points || 0;
+            
+            if (cost > points) {
+                showToast('Not Enough Points', `You need ${cost - points} more points!`, 'error');
+                return;
+            }
+
+            if (cost === 0) {
+                showToast('Free Emoji!', 'This emoji is free to use!', 'info');
+                return;
+            }
+
+            selectedEmoji = { emoji, name, cost };
+            document.getElementById('purchaseEmoji').textContent = emoji;
+            document.getElementById('purchaseEmojiName').textContent = name;
+            document.getElementById('purchaseEmojiCost').textContent = cost;
+            document.getElementById('purchaseModal').classList.add('active');
+        }
+
+        function closePurchaseModal() {
+            document.getElementById('purchaseModal').classList.remove('active');
+            selectedEmoji = null;
+        }
+
+        function confirmPurchase() {
+            if (!selectedEmoji || !currentUser) return;
+
+            currentUser.points -= selectedEmoji.cost;
+            currentUser.totalSpent = (currentUser.totalSpent || 0) + selectedEmoji.cost;
+            localStorage.setItem('ofujeUser', JSON.stringify(currentUser));
+
+            // Add to redemption history
+            redemptionHistory.unshift({
+                emoji: selectedEmoji.emoji,
+                name: selectedEmoji.name,
+                cost: selectedEmoji.cost,
+                date: 'Just now'
+            });
+
+            // Update Firebase
+            if (currentUser.id) {
+                database.ref(`users/${currentUser.id}/points`).set(currentUser.points);
+            }
+
+            updateUserUI();
+            loadEmojiShop(document.querySelector('.shop-category.active').dataset.category);
+            loadRedemptionHistory();
+            closePurchaseModal();
+
+            showToast('Purchase Complete!', `You bought ${selectedEmoji.emoji} ${selectedEmoji.name}!`, 'success');
+        }
+
+        // ==================== PROFILE ====================
+        function saveProfile(e) {
+            e.preventDefault();
+
+            const firstName = document.getElementById('editFirstName').value.trim();
+            const lastName = document.getElementById('editLastName').value.trim();
+            const bio = document.getElementById('editBio').value.trim();
+
+            if (!firstName || !lastName) {
+                showToast('Error', 'Please fill in all required fields', 'error');
+                return;
+            }
+
+            currentUser.name = `${firstName} ${lastName}`;
+            currentUser.bio = bio;
+            localStorage.setItem('ofujeUser', JSON.stringify(currentUser));
+
+            // Update Firebase
+            if (currentUser.id) {
+                database.ref(`users/${currentUser.id}`).update({
+                    firstName,
+                    lastName,
+                    bio
+                });
+            }
+
+            updateUserUI();
+            showToast('Profile Updated', 'Your profile has been saved!', 'success');
+        }
+
+        // ==================== COPY LOGIN CODE ====================
+        function copyLoginCode() {
+            const code = document.getElementById('userLoginCode').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                showToast('Copied!', 'Login code copied to clipboard', 'success');
+            });
+        }
+
+        // ==================== DELETE ACCOUNT ====================
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').classList.remove('active');
+            document.getElementById('deleteConfirmInput').value = '';
+            document.getElementById('confirmDeleteBtn').disabled = true;
+        }
+
+        async function deleteAccount() {
+            if (!currentUser || !currentUser.id) return;
+
+            try {
+                await database.ref(`users/${currentUser.id}`).remove();
+                localStorage.removeItem('ofujeUser');
+                showToast('Account Deleted', 'Your account has been deleted', 'success');
+                
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1500);
+            } catch (error) {
+                showToast('Error', 'Failed to delete account', 'error');
+            }
+        }
+
+        // ==================== LOGOUT ====================
+        function logout() {
+            localStorage.removeItem('ofujeUser');
+            showToast('Logged Out', 'See you next time!', 'info');
+            
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1000);
+        }
+
+        // ==================== TOAST ====================
+        function showToast(title, message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `
+                <div class="toast-icon ${type}">
+                    <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'times' : 'info'}"></i>
+                </div>
+                <div class="toast-content">
+                    <div class="toast-title">${title}</div>
+                    <div class="toast-message">${message}</div>
+                </div>
+            `;
+            container.appendChild(toast);
+
+            setTimeout(() => toast.classList.add('visible'), 100);
+            setTimeout(() => {
+                toast.classList.remove('visible');
+                setTimeout(() => toast.remove(), 400);
+            }, 4000);
+        }
+
+        // ==================== CHECK LIVE STATUS ====================
+        function checkLiveStatus() {
+            database.ref('stream/isLive').on('value', (snapshot) => {
+                const isLive = snapshot.val();
+                const btn = document.getElementById('watchLiveBtn');
+                
+                if (isLive) {
+                    btn.innerHTML = '<span class="live-indicator"></span><span>Watch Live</span>';
+                    btn.style.background = 'var(--danger)';
+                } else {
+                    btn.innerHTML = '<i class="fas fa-play"></i><span>Watch</span>';
+                    btn.style.background = 'var(--gradient-1)';
+                }
+            });
+        }
+
+        // Check live status on load
+        checkLiveStatus();
+    </script>
+</body>
+</html>
